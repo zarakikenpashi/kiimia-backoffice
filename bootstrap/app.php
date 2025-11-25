@@ -17,6 +17,16 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
+        // Exclure les routes API de la vérification CSRF
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
+
+        // S'assurer que le middleware CORS est bien activé
+        $middleware->alias([
+            'cors' => \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
+        
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
