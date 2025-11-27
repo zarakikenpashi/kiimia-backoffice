@@ -11,18 +11,19 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
-    {
+    public function register(Request $request){
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'role' => ['required', 'in:admin,company,customer'],
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
         ]);
 
         $token = $user->createToken('api-token')->plainTextToken;
@@ -35,8 +36,7 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
-    {
+    public function login(Request $request){
         $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -51,7 +51,7 @@ class AuthController extends Controller
         }
 
         // Optionnel : révoquer les anciens tokens
-        // $user->tokens()->delete();
+        $user->tokens()->delete();
 
         $token = $user->createToken('api-token')->plainTextToken;
 
@@ -63,8 +63,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(Request $request)
-    {
+    public function logout(Request $request){
         // Supprimer le token actuel
         $request->user()->currentAccessToken()->delete();
 
@@ -73,8 +72,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function user(Request $request)
-    {
+    public function user(Request $request){
         return response()->json([
             'user' => $request->user()
         ]);
