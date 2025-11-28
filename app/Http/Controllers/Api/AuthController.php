@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -63,8 +64,56 @@ class AuthController extends Controller
         ]);
     }
 
+    public function updateProfile(Request $request){
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'password' => ['nullable', Password::defaults()],
+            'fonction' => ['nullable','string','max:191'],
+            'photo'    => ['nullable', 'image','max:2048'],
+        ]);
+
+
+        // Mise à jour des champs simples
+        if (isset($validated['name'])) {
+            $user->name = $validated['name'];
+        }
+
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+
+        if (isset($validated['fonction'])) {
+            $user->fonction = $validated['fonction'];
+        }
+
+        // Gestion de la photo si fournie
+        if ($request->hasFile('photo')) {
+            // Supprimer l’ancienne image si elle existe
+            if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                Storage::disk('public')->delete($user->photo);
+            }
+
+            // Stocker la nouvelle image et mettre à jour le chemin
+            $validated['photo'] = $request->file('photo')->store('admins', 'public');
+        }
+
+        // Mise à jour du mot de passe si fourni
+        if (isset($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Profil mis à jour avec succès',
+            'user' => $user,
+        ]);
+    }
+
     public function logout(Request $request){
-        // Supprimer le token actuel
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([

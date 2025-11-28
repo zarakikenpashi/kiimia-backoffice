@@ -12,6 +12,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/update', [AuthController::class, 'updateProfile']);
     
     // Tes ressources API
     Route::get('/admin/liste', [AdminController::class, 'index']);
